@@ -5,6 +5,8 @@ import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
+import { APIURL } from '@/constants/api';
+
  
 interface FormData {
   email: string;
@@ -120,9 +122,12 @@ export default function LoginPage() {
     setLoading(true);
  
     try {
+      // const apiUrl = loginAsEmployee
+      //   ? 'https://hrtool-backend.onrender.com/api/employees/login'
+      //   : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/login`;
       const apiUrl = loginAsEmployee
-        ? 'https://hrtool-backend.onrender.com/api/employees/login'
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/login`;
+  ? `${APIURL}/api/employees/login`
+  : `${APIURL}/api/auth/login`;
         
       const response = await fetch(apiUrl, {
         method: 'POST',
