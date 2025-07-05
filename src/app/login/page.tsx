@@ -121,7 +121,7 @@ export default function LoginPage() {
  
     try {
       const apiUrl = loginAsEmployee
-        ? 'http://localhost:8080/api/employees/login'
+        ? 'https://hrtool-backend.onrender.com/api/employees/login'
         : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/login`;
         
       const response = await fetch(apiUrl, {
