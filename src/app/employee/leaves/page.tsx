@@ -21,9 +21,20 @@ interface Leave {
   requestDate?: string;
 }
  
+interface Holiday {
+  id: number;
+  holidayName: string;
+  day: string;
+  startDate: [number, number, number];
+  endDate: [number, number, number];
+  type: string;
+  coverage: string;
+}
+ 
 export default function LeavesPage() {
   const router = useRouter();
   const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newLeave, setNewLeave] = useState<Partial<Leave>>({
     leaveType: 'casual',
@@ -36,6 +47,7 @@ export default function LeavesPage() {
   const [employeeId, setEmployeeId] = useState<string | null>(null);
  
   const API_BASE = APIURL + '/api/leave-requests';
+  const HOLIDAYS_API = APIURL + '/api/holidays';
  
   // Get employee ID from sessionStorage on component mount
   useEffect(() => {
@@ -80,6 +92,13 @@ export default function LeavesPage() {
       })
       .finally(() => setLoading(false));
   }, [API_BASE, employeeId]); // Added employeeId as dependency
+ 
+  // Fetch holidays on mount
+  useEffect(() => {
+    axios.get(HOLIDAYS_API)
+      .then(res => setHolidays(res.data))
+      .catch(() => setHolidays([]));
+  }, [HOLIDAYS_API]);
  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,6 +169,13 @@ export default function LeavesPage() {
     } catch {
       return dateString;
     }
+  };
+ 
+  // Helper to format date array
+  const formatDateArray = (arr?: [number, number, number]) => {
+    if (!arr) return '';
+    const [y, m, d] = arr;
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   };
  
   return (
@@ -276,6 +302,41 @@ export default function LeavesPage() {
               </div>
             </form>
           )}
+        </div>
+ 
+        {/* Holidays Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Company Holidays</h2>
+          <div className="bg-white rounded-xl shadow-md p-4">
+            {holidays.length === 0 ? (
+              <div className="text-gray-500">No holidays found.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-separate border-spacing-y-1">
+                  <thead>
+                    <tr className="bg-blue-50">
+                      <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">Holiday Name</th>
+                      <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">Date</th>
+                      <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">Day</th>
+                      <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">Type</th>
+                      <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">Coverage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {holidays.map((h, idx) => (
+                      <tr key={h.id} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                        <td className="px-6 py-2 text-center font-medium text-gray-900">{h.holidayName}</td>
+                        <td className="px-6 py-2 text-center text-gray-700">{formatDateArray(h.startDate)}</td>
+                        <td className="px-6 py-2 text-center text-gray-700">{h.day}</td>
+                        <td className="px-6 py-2 text-center text-gray-700">{h.type}</td>
+                        <td className="px-6 py-2 text-center text-gray-700">{h.coverage}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
  
         {/* Leave History */}

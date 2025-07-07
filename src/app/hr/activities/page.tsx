@@ -207,7 +207,7 @@ export default function ActivitiesPage() {
   const [modalType, setModalType] = useState<ModalType>('add');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [formData, setFormData] = useState<Partial<Activity>>({});
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, ] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
   const isEditMode = modalType === 'edit';
@@ -340,7 +340,6 @@ export default function ActivitiesPage() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const categories = ['all', ...new Set(activities.map(a => a.category))];
   const statuses = ['all', 'pending', 'in-progress', 'completed'];
 
   if (isLoading) {
@@ -388,17 +387,7 @@ export default function ActivitiesPage() {
               />
             </div>
             <div className="flex gap-4">
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category}
-                  </option>
-                ))}
-              </select>
+             
               <select
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={selectedStatus}

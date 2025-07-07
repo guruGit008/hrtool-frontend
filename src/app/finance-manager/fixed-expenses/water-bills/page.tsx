@@ -182,7 +182,7 @@ export default function WaterBillsPage() {
               {expenses.map(e => (
                 <tr key={e.id}>
                   <td className="px-6 py-4">{new Date(e.date[0], e.date[1] - 1, e.date[2]).toLocaleDateString()}</td>
-                  <td className="px-6 py-4">${e.amount.toFixed(2)}</td>
+                  <td className="px-6 py-4">{e.amount.toFixed(2)}</td>
                   <td className="px-6 py-4">{e.description}</td>
                   <td className="px-6 py-4 text-right">
                     <button onClick={() => handleEditClick(e)} className="text-blue-600 mr-4 hover:text-blue-900">

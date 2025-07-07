@@ -191,7 +191,7 @@ export default function ElectricBillsPage() {
               {expenses.map((expense) => (
                 <tr key={expense.id}>
                   <td className="px-6 py-4">{new Date(expense.date[0], expense.date[1] - 1, expense.date[2]).toLocaleDateString()}</td>
-                  <td className="px-6 py-4">${expense.amount.toFixed(2)}</td>
+                  <td className="px-6 py-4">{expense.amount.toFixed(2)}</td>
                   <td className="px-6 py-4">{expense.description}</td>
                   <td className="px-6 py-4 text-right">
                     <button onClick={() => handleEditClick(expense)} className="text-blue-600 mr-4">Edit</button>

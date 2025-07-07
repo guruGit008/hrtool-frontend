@@ -135,6 +135,14 @@ export default function JoiningPage() {
   ];
   const [formError, setFormError] = useState('');
  
+  // Add country code options
+  const countryCodeOptions = ['+91', '+1', '+44', '+61', '+81', '+971', '+49', '+86', '+33', '+7'];
+  const [countryCode, setCountryCode] = useState<string>(countryCodeOptions[0]);
+  const [phoneNumberOnly, setPhoneNumberOnly] = useState<string>('');
+ 
+  // Add a state for employee ID error
+  const [employeeIdError, setEmployeeIdError] = useState('');
+ 
   const isViewMode = modalType === 'view';
  
   useEffect(() => {
@@ -154,6 +162,34 @@ export default function JoiningPage() {
     };
     fetchEmployees();
   }, []);
+ 
+  // Update formData.phoneNumber when either changes
+  useEffect(() => {
+    setFormData({ ...formData, phoneNumber: countryCode + phoneNumberOnly });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryCode, phoneNumberOnly]);
+ 
+  // Real-time check for duplicate Employee ID and enforce 'EMP' prefix
+  useEffect(() => {
+    if (!formData.employeeId) {
+      setEmployeeIdError('');
+      return;
+    }
+    let empId = formData.employeeId;
+    // Auto-prepend 'EMP' if not present
+    if (!empId.startsWith('EMP')) {
+      empId = 'EMP' + empId.replace(/^emp/i, '').replace(/^EMP/i, '');
+      setFormData({ ...formData, employeeId: empId });
+      return;
+    }
+    // Check for duplicate
+    const exists = employees.some(emp => emp.employeeId === empId);
+    if (exists && (modalType === 'add' || (modalType === 'edit' && empId !== selectedEmployee?.employeeId))) {
+      setEmployeeIdError('Employee ID already exists.');
+    } else {
+      setEmployeeIdError('');
+    }
+  }, [formData.employeeId, employees, modalType, selectedEmployee]);
  
   const openModal = (type: ModalType, employee?: Employee) => {
     setModalType(type);
@@ -195,8 +231,67 @@ export default function JoiningPage() {
  
   const handleSubmit = async () => {
     setFormError('');
-    if (!formData.employeeId || !formData.employeeName || !formData.email || !formData.password || !formData.phoneNumber || !formData.position || !formData.department || !formData.joiningDate || !formData.bloodGroup) {
-      setFormError('Please fill in all required fields.');
+    if (employeeIdError) {
+      setFormError(employeeIdError);
+      return;
+    }
+    // Email validation: must not be empty and must contain @
+    if (!formData.email) {
+      setFormError('Email is required.');
+      return;
+    }
+    if (!formData.email.includes('@')) {
+      setFormError('Please enter a valid email address containing "@".');
+      return;
+    }
+    // Password validation: must not be empty and must meet requirements
+    const password = formData.password || '';
+    if (!password) {
+      setFormError('Password is required.');
+      return;
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setFormError('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
+      return;
+    }
+    // Phone number validation: country code from dropdown, 10 digits only
+    if (!countryCode) {
+      setFormError('Country code is required.');
+      return;
+    }
+    if (!phoneNumberOnly) {
+      setFormError('Phone number is required.');
+      return;
+    }
+    const phoneDigitsRegex = /^\d{10}$/;
+    if (!phoneDigitsRegex.test(phoneNumberOnly)) {
+      setFormError('Phone number must be exactly 10 digits.');
+      return;
+    }
+    // Other required fields
+    if (!formData.employeeId) {
+      setFormError('Employee ID is required.');
+      return;
+    }
+    if (!formData.employeeName) {
+      setFormError('Employee Name is required.');
+      return;
+    }
+    if (!formData.position) {
+      setFormError('Position is required.');
+      return;
+    }
+    if (!formData.department) {
+      setFormError('Department is required.');
+      return;
+    }
+    if (!formData.joiningDate) {
+      setFormError('Joining Date is required.');
+      return;
+    }
+    if (!formData.bloodGroup) {
+      setFormError('Blood Group is required.');
       return;
     }
     try {
@@ -415,10 +510,10 @@ export default function JoiningPage() {
                   <div className="space-y-4">
                     <div className="flex justify-center mb-4">
                       {selectedEmployee?.profilePhotoUrl ? (
-                        <Image src={`${API_ORIGIN}${selectedEmployee.profilePhotoUrl}`} alt={selectedEmployee.employeeName || 'Employee'} width={96} height={96} className="w-24 h-24 rounded-full object-cover" />
+                        <Image src={`${API_ORIGIN}${selectedEmployee.profilePhotoUrl}`} alt={selectedEmployee.employeeName || 'Employee'} width={120} height={120} className="w-30 h-30 rounded-full object-cover" />
                       ) : (
-                        <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                          <User className="w-12 h-12 text-gray-400" />
+                        <div className="w-30 h-30 rounded-full bg-gray-200 flex items-center justify-center">
+                          <User className="w-16 h-16 text-gray-400" />
                         </div>
                       )}
                     </div>
@@ -491,13 +586,21 @@ export default function JoiningPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
-                        <input
-                          type="text"
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          value={formData.employeeId || ''}
-                          onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
-                        />
+                        <div className="flex items-center">
+                          <span className="px-2 py-2 bg-gray-100 border border-gray-300 rounded-l-lg text-gray-700 select-none">EMP</span>
+                          <input
+                            type="text"
+                            required
+                            className="w-full px-3 py-2 border-t border-b border-r border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={formData.employeeId ? formData.employeeId.replace(/^EMP/, '') : ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9A-Za-z]/g, '');
+                              setFormData({ ...formData, employeeId: 'EMP' + val });
+                            }}
+                            placeholder="Enter unique ID"
+                          />
+                        </div>
+                        {employeeIdError && <div className="text-red-600 text-xs mt-1">{employeeIdError}</div>}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Employee Name</label>
@@ -540,13 +643,31 @@ export default function JoiningPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                        <input
-                          type="text"
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          value={formData.phoneNumber || ''}
-                          onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
-                        />
+                        <div className="flex gap-2">
+                          <select
+                            className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={countryCode}
+                            onChange={e => setCountryCode(e.target.value)}
+                          >
+                            {countryCodeOptions.map(code => (
+                              <option key={code} value={code}>{code}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            required
+                            maxLength={10}
+                            pattern="\\d{10}"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={phoneNumberOnly}
+                            onChange={e => {
+                              // Only allow digits
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setPhoneNumberOnly(val);
+                            }}
+                            placeholder="10 digit number"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
@@ -629,9 +750,9 @@ export default function JoiningPage() {
                           <button
                             type="button"
                             onClick={() => document.getElementById('profile-photo-input')?.click()}
-                            className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                            className="flex items-center px-5 py-4 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-lg"
                           >
-                            <Plus className="w-5 h-5 mr-2" />
+                            <Plus className="w-6 h-6 mr-2" />
                             <span>Select Photo</span>
                           </button>
                         </div>
@@ -639,9 +760,9 @@ export default function JoiningPage() {
                           <Image
                             src={profilePhotoPreview}
                             alt="Profile Preview"
-                            width={64}
-                            height={64}
-                            className="w-16 h-16 rounded-full mt-2 object-cover"
+                            width={120}
+                            height={120}
+                            className="w-30 h-30 rounded-full mt-4 object-cover"
                           />
                         )}
                       </div>

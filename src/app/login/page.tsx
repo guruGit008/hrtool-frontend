@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import { APIURL } from '@/constants/api';
-// import { APIURL } from '@/constants/api';
-
  
 interface FormData {
   email: string;
@@ -46,7 +44,7 @@ export default function LoginPage() {
       router.replace('/finance-manager/dashboard');
     } else if (roles.includes('HR')) {
       router.replace('/hr');
-    } else if (roles.includes('DATAMANAGER')) {
+    } else if (roles.includes('DATA_MANAGER')) {
       router.replace('/data-manager');
     } else {
       router.replace('/dashboard');
@@ -123,12 +121,9 @@ export default function LoginPage() {
     setLoading(true);
  
     try {
-      // const apiUrl = loginAsEmployee
-      //   ? 'https://hrtool-backend.onrender.com/api/employees/login'
-      //   : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/login`;
       const apiUrl = loginAsEmployee
-  ? `${APIURL}/api/employees/login`
-  : `${APIURL}/api/auth/login`;
+        ? APIURL + '/api/employees/login'
+        : APIURL + `/api/auth/login`;
         
       const response = await fetch(apiUrl, {
         method: 'POST',

@@ -25,7 +25,7 @@ interface Memo {
   recipientEmployeeIds: string[];
   recipientDepartments: string[];
   sentToAll: boolean;
-  createdAt?: string;
+  sentAt?: string;
   status?: 'sent' | 'draft';
 }
 
@@ -162,7 +162,7 @@ export default function EmployeeMemosPage() {
               ) : (
                 memos.map((memo) => {
                   // Safely parse and validate the creation date
-                  const sentDate = memo.createdAt ? new Date(memo.createdAt) : null;
+                  const sentDate = memo.sentAt ? new Date(memo.sentAt) : null;
                   const isValidSentDate = sentDate && !isNaN(sentDate.getTime());
 
                   return (

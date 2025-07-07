@@ -356,6 +356,7 @@ const LeaveManagementSystem = () => {
  
   const handleEditHoliday = (holiday: Holiday) => {
     setEditHoliday(holiday);
+    setShowEditHolidayModal(true);
   };
  
   const updateHoliday = async () => {

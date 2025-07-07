@@ -77,7 +77,7 @@ export default function HomePage() {
           <div className="flex items-center cursor-pointer">
            
             <span className="ml-2 font-bold text-xl tracking-wide text-gray-800">
-            <Image src="https://www.tirangaaerospace.com/assets/images/logo/logo.png" alt="Tiranga Aerospace Logo" width={32} height={32} />
+            <Image src="https://www.tirangaaerospace.com/assets/images/logo/logo.png" alt="Tiranga Aerospace Logo" width={132} height={132} />
             </span>
           </div>
           {/* Desktop Menu */}

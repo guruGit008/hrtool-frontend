@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { 
   FileText, 
   Building2, 
@@ -154,7 +153,6 @@ export default function DataManagerDashboard() {
   const [moduleCounts, setModuleCounts] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
   const [salesData, setSalesData] = useState<ChartData>({
     labels: [],
     datasets: [{
@@ -186,17 +184,7 @@ export default function DataManagerDashboard() {
       ],
     }]
   });
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const roles = JSON.parse(localStorage.getItem('roles') || '[]');
 
-    if (!token || !roles.includes('DATAMANAGER')) {
-      router.replace('/login');
-    } else {
-      setLoading(true);
-     
-    }
-  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {

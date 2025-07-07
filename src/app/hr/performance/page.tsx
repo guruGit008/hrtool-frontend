@@ -85,11 +85,13 @@ export default function PerformanceManagement() {
     achievements: '',
     reviewer: ''
   });
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employeeNotFound, setEmployeeNotFound] = useState(false);
 
   // Add word count helpers for goals, achievements, feedback
   const getWordCount = (text: string | undefined) => (text || '').trim().split(/\s+/).filter(Boolean).length;
   const maxWords = 250;
-  const warnWords = 200;
+  
   const goalsWordCount = getWordCount(formData.goals);
   const achievementsWordCount = getWordCount(formData.achievements);
   const feedbackWordCount = getWordCount(formData.feedback);
@@ -115,6 +117,13 @@ export default function PerformanceManagement() {
 
   useEffect(() => {
     fetchReviews();
+  }, []);
+
+  useEffect(() => {
+    fetch(APIURL + '/api/employees')
+      .then(res => res.json())
+      .then(data => setEmployees(data))
+      .catch(() => setEmployees([]));
   }, []);
 
   const getRatingColor = (rating: number) => {
@@ -199,9 +208,20 @@ export default function PerformanceManagement() {
       // Basic validation
       if (!formData.employee?.employeeId || !formData.employee?.employeeName || 
           !formData.employee?.position || !formData.employee?.department || 
-          !formData.rating || !formData.reviewStatus) {
+          !formData.rating || !formData.reviewStatus ||
+          !formData.lastReviewDate || !formData.nextReviewDate ||
+          !formData.goals || !formData.feedback || !formData.achievements ||
+          !formData.reviewer || !formData.employee?.status) {
         alert('Please fill in all required fields');
         return;
+      }
+      // Check if employee exists
+      const found = employees.some(emp => emp.employeeId === formData.employee?.employeeId);
+      if (!found) {
+        setEmployeeNotFound(true);
+        return;
+      } else {
+        setEmployeeNotFound(false);
       }
 
       // Only send employeeId, not the whole employee object
@@ -525,10 +545,31 @@ export default function PerformanceManagement() {
                         <input
                           type="text"
                           required
+                          pattern="EMP\\d+"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           value={formData.employee?.employeeId || ''}
-                          onChange={(e) => updateEmployeeField('employeeId', e.target.value)}
+                          onChange={(e) => {
+                            updateEmployeeField('employeeId', e.target.value);
+                            setEmployeeNotFound(false);
+                          }}
+                          onBlur={() => {
+                            const emp = employees.find(emp => emp.employeeId === formData.employee?.employeeId);
+                            if (emp) {
+                              setFormData(prev => ({
+                                ...prev,
+                                employee: {
+                                  ...prev.employee,
+                                  employeeName: emp.employeeName,
+                                  department: emp.department,
+                                  position: emp.position,
+                                }
+                              }));
+                            }
+                          }}
                         />
+                        {employeeNotFound && (
+                          <div className="text-red-600 text-sm mt-1">Employee not found</div>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Employee Name</label>
@@ -538,6 +579,7 @@ export default function PerformanceManagement() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           value={formData.employee?.employeeName || ''}
                           onChange={(e) => updateEmployeeField('employeeName', e.target.value)}
+                          readOnly={!!employees.find(emp => emp.employeeId === formData.employee?.employeeId)}
                         />
                       </div>
                       <div>
@@ -548,6 +590,7 @@ export default function PerformanceManagement() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           value={formData.employee?.position || ''}
                           onChange={(e) => updateEmployeeField('position', e.target.value)}
+                          readOnly={!!employees.find(emp => emp.employeeId === formData.employee?.employeeId)}
                         />
                       </div>
                       <div>
@@ -558,6 +601,7 @@ export default function PerformanceManagement() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           value={formData.employee?.department || ''}
                           onChange={(e) => updateEmployeeField('department', e.target.value)}
+                          readOnly={!!employees.find(emp => emp.employeeId === formData.employee?.employeeId)}
                         />
                       </div>
                       <div>
@@ -628,58 +672,40 @@ export default function PerformanceManagement() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Goals</label>
                       <textarea
+                        required
+                        maxLength={250}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={3}
                         value={formData.goals || ''}
-                        onChange={e => {
-                          const words = e.target.value.trim().split(/\s+/).filter(Boolean);
-                          if (words.length <= maxWords) {
-                            setFormData(prev => ({ ...prev, goals: e.target.value }));
-                          } else {
-                            setFormData(prev => ({ ...prev, goals: words.slice(0, maxWords).join(' ') }));
-                          }
-                        }}
-                        placeholder="Goals (max 250 words)"
-                        className="w-full border rounded-md p-2"
-                        rows={4}
+                        onChange={(e) => setFormData({...formData, goals: e.target.value})}
                       />
-                      <div className={`text-xs mt-1 mb-2 ${goalsWordCount > warnWords ? (goalsWordCount > maxWords ? 'text-red-600' : 'text-yellow-600') : 'text-gray-500'}`}>Word count: {goalsWordCount} / {maxWords}</div>
+                      <div className="text-xs text-gray-500 mt-1">{(formData.goals || '').length} / 250</div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Feedback</label>
                       <textarea
+                        required
+                        maxLength={250}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={3}
                         value={formData.feedback || ''}
-                        onChange={e => {
-                          const words = e.target.value.trim().split(/\s+/).filter(Boolean);
-                          if (words.length <= maxWords) {
-                            setFormData(prev => ({ ...prev, feedback: e.target.value }));
-                          } else {
-                            setFormData(prev => ({ ...prev, feedback: words.slice(0, maxWords).join(' ') }));
-                          }
-                        }}
-                        placeholder="Feedback (max 250 words)"
-                        className="w-full border rounded-md p-2"
-                        rows={4}
+                        onChange={(e) => setFormData({...formData, feedback: e.target.value})}
                       />
-                      <div className={`text-xs mt-1 mb-2 ${feedbackWordCount > warnWords ? (feedbackWordCount > maxWords ? 'text-red-600' : 'text-yellow-600') : 'text-gray-500'}`}>Word count: {feedbackWordCount} / {maxWords}</div>
+                      <div className="text-xs text-gray-500 mt-1">{(formData.feedback || '').length} / 250</div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Achievements</label>
                       <textarea
+                        required
+                        maxLength={250}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={3}
                         value={formData.achievements || ''}
-                        onChange={e => {
-                          const words = e.target.value.trim().split(/\s+/).filter(Boolean);
-                          if (words.length <= maxWords) {
-                            setFormData(prev => ({ ...prev, achievements: e.target.value }));
-                          } else {
-                            setFormData(prev => ({ ...prev, achievements: words.slice(0, maxWords).join(' ') }));
-                          }
-                        }}
-                        placeholder="Achievements (max 250 words)"
-                        className="w-full border rounded-md p-2"
-                        rows={4}
+                        onChange={(e) => setFormData({...formData, achievements: e.target.value})}
                       />
-                      <div className={`text-xs mt-1 mb-2 ${achievementsWordCount > warnWords ? (achievementsWordCount > maxWords ? 'text-red-600' : 'text-yellow-600') : 'text-gray-500'}`}>Word count: {achievementsWordCount} / {maxWords}</div>
+                      <div className="text-xs text-gray-500 mt-1">{(formData.achievements || '').length} / 250</div>
                     </div>
 
                     <div className="flex space-x-3 pt-4">

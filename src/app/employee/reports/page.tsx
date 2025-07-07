@@ -30,6 +30,15 @@ interface Report {
   submittedBy?: string;
   approvedBy?: string;
   approvedDate?: string;
+  department?: string;
+  customerName?: string;
+  designation?: string;
+  landlineOrMobile?: string;
+  emailId?: string;
+  remarks?: string;
+  productOrRequirements?: string;
+  division?: string;
+
 }
  
 // Define your backend API base URL
@@ -51,6 +60,25 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [customerReport, setCustomerReport] = useState({
+    title: '',
+    content: '',
+    date: '',
+    status: 'submitted',
+    submittedBy: '',
+    customerName: '',
+    designation: '',
+    landlineOrMobile: '',
+    emailId: '',
+    remarks: '',
+    productOrRequirements: '',
+    division: '',
+    attachments: [] as string[],
+  });
+  const divisionOptions = [
+    'Military Radar', 'ADSN (Advanced Defence System  Navy)', 'Naval Sonar & Communication System (NS-1)', ' T & BS (SCUS)', 'PDIC (PRODUCT DEVELPMENT)', 'EW & Avonics', 'Naval Radar and fire Control system(NS-2)','Militry Communication(MCE)', 'MS (missile systems)','MMF (Milatry Manfacturing  Facility)','NCS (Network Centric Systems)','PURCHASE','MWSC (Microwave Super Components)','HMC( Hybrid Micro Circuits)','EMCTC/QM, Hydrabad','ADSN','(D&E-MCW) Ghaziabad','MM/GR1-RADAR ,Ghaziabad','D&E - Antenna, Ghaziabad','Panchakula','(PCB Software Design Group)','ELWLS Div, Hydrabad','D&E (NS),Hyderabad','D & E,  Chennai','Microwave Tubes Division(MWT)'
+  ];
+  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
  
   const reportTypes = [
     { id: 'employee', label: 'Employee Report', icon: <FileText className="w-5 h-5" /> },
@@ -159,7 +187,53 @@ export default function ReportsPage() {
       setError('Employee ID not found. Please login again.');
       return;
     }
-    
+    if (newReport.type === 'customer') {
+      // Validate required fields for customer report
+      if (!customerReport.title || !customerReport.date || !customerReport.customerName || !customerReport.designation || !customerReport.landlineOrMobile || !customerReport.emailId || !customerReport.productOrRequirements || !customerReport.division) {
+        setError('Please fill all required fields for Customer Report.');
+        return;
+      }
+      const reportData = {
+        type: 'customer',
+        title: customerReport.title,
+        content: customerReport.content,
+        date: customerReport.date,
+        status: customerReport.status,
+        submittedBy: employeeId,
+        customerName: customerReport.customerName,
+        designation: customerReport.designation,
+        landlineOrMobile: customerReport.landlineOrMobile,
+        emailId: customerReport.emailId,
+        remarks: customerReport.remarks,
+        productOrRequirements: customerReport.productOrRequirements,
+        division: customerReport.division,
+        attachments: customerReport.attachments,
+      };
+      try {
+        const response = await fetch(BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reportData),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Failed to create report: ${response.status}`);
+        }
+        const createdReport: Report = await response.json();
+        setReports([createdReport, ...reports]);
+        setShowNewReportForm(false);
+        setCustomerReport({
+          title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', attachments: []
+        });
+        setNewReport({ type: 'employee', subtype: 'daily', title: '', content: '', status: 'draft' });
+        setError(null);
+        toast.success('Customer Report submitted successfully!');
+      } catch (err: unknown) {
+        setError(`Error submitting customer report: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        toast.error('Failed to submit customer report. Please try again later.');
+      }
+      return;
+    }
     // Ensure required fields are present
     if (!newReport.title || !newReport.content) {
       setError('Title and Content are required.');
@@ -234,7 +308,203 @@ export default function ReportsPage() {
  
   const renderNewReportForm = () => {
     if (!showNewReportForm) return null;
- 
+    if (newReport.type === 'customer') {
+      return (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overflow-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-auto my-8 p-0 animate-slideIn">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center px-8 pt-8 pb-4 border-b">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-50 rounded-xl">
+                  <FilePlus className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-900">Create Customer Report</h2>
+                  <p className="text-sm text-gray-500 mt-1">Fill in the details below to create your customer report</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowNewReportForm(false);
+                  setCustomerReport({ title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', attachments: [] });
+                  setNewReport({ type: 'employee', subtype: 'daily', title: '', content: '', status: 'draft' });
+                  setError(null);
+                }}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {/* Modal Body */}
+            <form className="px-8 py-6 max-h-[70vh] overflow-y-auto">
+              {/* Customer Info Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Customer Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Title <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={customerReport.title || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, title: e.target.value })}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                      placeholder="Enter report title"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Date <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      value={customerReport.date || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, date: e.target.value })}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Customer Name <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={customerReport.customerName || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, customerName: e.target.value })}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                      placeholder="Enter customer name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Designation <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={customerReport.designation || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, designation: e.target.value })}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                      placeholder="Enter designation"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Landline or Mobile <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={customerReport.landlineOrMobile || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, landlineOrMobile: e.target.value })}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                      placeholder="Enter landline or mobile number"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email ID <span className="text-red-500">*</span></label>
+                    <input
+                      type="email"
+                      value={customerReport.emailId || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, emailId: e.target.value })}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                      placeholder="Enter email ID"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Department <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={customerReport.division || ""}
+                        onChange={e => setCustomerReport({ ...customerReport, division: e.target.value })}
+                        onFocus={() => setShowDeptDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowDeptDropdown(false), 100)}
+                        placeholder="Select or search department"
+                        className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                        required
+                        autoComplete="off"
+                      />
+                      {showDeptDropdown && (
+                        <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg">
+                          {divisionOptions.filter(opt =>
+                            opt.toLowerCase().includes(customerReport.division.toLowerCase())
+                          ).map(opt => (
+                            <li
+                              key={opt}
+                              onMouseDown={() => {
+                                setCustomerReport({ ...customerReport, division: opt });
+                                setShowDeptDropdown(false);
+                              }}
+                              className={`px-4 py-2 cursor-pointer hover:bg-blue-100 ${customerReport.division === opt ? 'bg-blue-100' : ''}`}
+                            >
+                              {opt}
+                            </li>
+                          ))}
+                          {divisionOptions.filter(opt =>
+                            opt.toLowerCase().includes(customerReport.division.toLowerCase())
+                          ).length === 0 && (
+                            <li className="px-4 py-2 text-gray-400">No results found</li>
+                          )}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Requirements Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Requirements & Remarks</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Product or Requirements <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={customerReport.productOrRequirements || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, productOrRequirements: e.target.value })}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                      placeholder="Enter product or requirements discussed"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Remarks</label>
+                    <textarea
+                      value={customerReport.remarks || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, remarks: e.target.value })}
+                      rows={2}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none py-2.5 mt-1"
+                      placeholder="Any remarks"
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* Content Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Additional Content</h3>
+                <textarea
+                  value={customerReport.content || ""}
+                  onChange={e => setCustomerReport({ ...customerReport, content: e.target.value })}
+                  rows={4}
+                  className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none py-2.5"
+                  placeholder="Additional content (optional)"
+                />
+              </div>
+              {/* Error Message */}
+              {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
+              {/* Action Buttons */}
+              <div className="flex flex-col md:flex-row justify-end gap-4 pt-4 border-t mt-8">
+                <button type="button" onClick={() => {
+                  setShowNewReportForm(false);
+                  setCustomerReport({ title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', attachments: [] });
+                  setNewReport({ type: 'employee', subtype: 'daily', title: '', content: '', status: 'draft' });
+                  setError(null);
+                }} className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 w-full md:w-auto">Cancel</button>
+                <button type="button" onClick={handleSubmitReport} className="px-6 py-2.5 text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" disabled={!customerReport.title || !customerReport.date || !customerReport.customerName || !customerReport.designation || !customerReport.landlineOrMobile || !customerReport.emailId || !customerReport.productOrRequirements || !customerReport.division}>Submit Report</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
     const maxWords = 1000;
     const wordCount = newReport.content?.trim().split(/\s+/).filter(word => word.length > 0).length || 0;
     const remainingWords = maxWords - wordCount;
@@ -529,43 +799,66 @@ export default function ReportsPage() {
                     <div className="text-center text-gray-500 py-8">No reports found for the selected filters.</div>
                   ) : (
                     reports.map(report => (
-                      <div key={report.id} className="border rounded-lg p-4 animate-fadeIn">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start space-x-4">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                              {getReportIcon(report.type)}
+                      report.type === 'customer' ? (
+                        <div key={report.id} className="border rounded-2xl p-6 bg-gradient-to-br from-blue-50 to-white shadow-md animate-fadeIn">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                {getReportIcon(report.type)}
+                              </div>
+                              <h3 className="font-semibold text-xl text-gray-900">{report.title}</h3>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(report.status)}`}>{report.status}</span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Customer Name</div>
+                              <div className="font-medium text-gray-800">{report.customerName || '-'}</div>
                             </div>
                             <div>
-                              <h3 className="font-medium text-gray-900">{report.title}</h3>
-                              <div className="mt-1 text-sm text-gray-600">
-                                <p>Type: {reportTypes.find(t => t.id === report.type)?.label}</p>
-                                {report.type === 'employee' && report.subtype && (
-                                  <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
-                                )}
-                                <p>Date: {new Date(report.date).toLocaleDateString()}</p>
-                                <p>Submitted by: {report.submittedBy}</p>
-                                {report.approvedBy && (
-                                  <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
-                                )}
-                              </div>
+                              <div className="text-xs text-gray-500 mb-1">Designation</div>
+                              <div className="font-medium text-gray-800">{report.designation || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Landline/Mobile</div>
+                              <div className="font-medium text-gray-800">{report.landlineOrMobile || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Email ID</div>
+                              <div className="font-medium text-gray-800">{report.emailId || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Product/Requirements</div>
+                              <div className="font-medium text-gray-800">{report.productOrRequirements || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Date</div>
+                              <div className="font-medium text-gray-800">{new Date(report.date).toLocaleDateString()}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Department</div>
+                              <div className="font-medium text-gray-800">{report.division || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Submitted By</div>
+                              <div className="font-medium text-gray-800">{report.submittedBy || '-'}</div>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
-                              {report.status}
-                            </span>
-                            {/* Optional: Add Download button if attachments are actual URLs */}
-                            {report.attachments && report.attachments.length > 0 && (
-                                <a
-                                  href={`/api/download-attachment/${report.id}`} // Example: Replace with actual download endpoint
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                                  title="Download Attachments"
-                                >
-                                  <Download className="w-5 h-5" />
-                                </a>
-                            )}
+                          <div className="mb-2">
+                            <div className="text-xs text-gray-500 mb-1">Remarks</div>
+                            <div className="text-gray-700">{report.remarks || '-'}</div>
+                          </div>
+                          <div className="mb-2">
+                            <div className="text-xs text-gray-500 mb-1">Content</div>
+                            <div className="text-gray-700">{report.content || '-'}</div>
+                          </div>
+                          {report.attachments && report.attachments.length > 0 && (
+                            <div className="mt-4 flex items-center space-x-2">
+                              <FileText className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">Attachments: {report.attachments.join(', ')}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-end gap-2 mt-4">
                             <button
                               onClick={() => handleDeleteReport(report.id)}
                               className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
@@ -575,18 +868,66 @@ export default function ReportsPage() {
                             </button>
                           </div>
                         </div>
-                        <div className="mt-4 text-sm text-gray-600">
-                          <p>{report.content}</p>
-                        </div>
-                        {report.attachments && report.attachments.length > 0 && (
-                          <div className="mt-4 flex items-center space-x-2">
-                            <FileText className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">
-                              Attachments: {report.attachments.join(', ')}
-                            </span>
+                      ) : (
+                        <div key={report.id} className="border rounded-lg p-4 animate-fadeIn">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-4">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                {getReportIcon(report.type)}
+                              </div>
+                              <div>
+                                <h3 className="font-medium text-gray-900">{report.title}</h3>
+                                <div className="mt-1 text-sm text-gray-600">
+                                  <p>Type: {reportTypes.find(t => t.id === report.type)?.label}</p>
+                                  {report.type === 'employee' && report.subtype && (
+                                    <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
+                                  )}
+                                  <p>Date: {new Date(report.date).toLocaleDateString()}</p>
+                                  <p>Submitted by: {report.submittedBy}</p>
+                                  {report.approvedBy && (
+                                    <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
+                                {report.status}
+                              </span>
+                              {/* Optional: Add Download button if attachments are actual URLs */}
+                              {report.attachments && report.attachments.length > 0 && (
+                                  <a
+                                    href={`/api/download-attachment/${report.id}`} // Example: Replace with actual download endpoint
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    title="Download Attachments"
+                                  >
+                                    <Download className="w-5 h-5" />
+                                  </a>
+                              )}
+                              <button
+                                onClick={() => handleDeleteReport(report.id)}
+                                className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                                title="Delete Report"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
                           </div>
-                        )}
-                      </div>
+                          <div className="mt-4 text-sm text-gray-600">
+                            <p>{report.content}</p>
+                          </div>
+                          {report.attachments && report.attachments.length > 0 && (
+                            <div className="mt-4 flex items-center space-x-2">
+                              <FileText className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">
+                                Attachments: {report.attachments.join(', ')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )
                     ))
                   )}
                 </div>

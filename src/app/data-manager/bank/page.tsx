@@ -44,7 +44,7 @@ function BankDataView({ isOpen, onClose, data, fields, title }: {
 const formFields: FormField[] = [
   { name: 'documentType', label: 'Document Type', type: 'select', options: ['Bank Statement', 'Bank Guarantee', 'Bank Certificate'], required: true },
   { name: 'bankName', label: 'Bank Name', type: 'text', required: true },
-  { name: 'accountNumber', label: 'Account Number', type: 'text', required: true },
+  { name: 'accountNumber', label: 'Account Number', type: 'number', required: true },
   { name: 'date', label: 'Date', type: 'date', required: true },
   { name: 'status', label: 'Status', type: 'select', options: ['Valid', 'Expired', 'Pending'], required: true }
 ];

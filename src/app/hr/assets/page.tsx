@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Eye, Edit, Trash2, X, Laptop, Package } from 'lucide-react';
+import { Search,  Plus, Eye, Edit, Trash2, X, Laptop } from 'lucide-react';
 import { APIURL } from '@/constants/api';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -250,9 +250,7 @@ export default function AssetManagement() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-              <Filter className="w-5 h-5 text-gray-600" />
-            </button>
+          
           </div>
         </div>
 
@@ -341,7 +339,7 @@ export default function AssetManagement() {
                       {/* Asset Name with Icon */}
                       <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-start h-full">
                         <div className="flex items-center mb-2">
-                          <Package className="w-6 h-6 text-blue-500 mr-2" />
+                   
                           <span className="text-lg font-semibold text-gray-800">{selectedAsset?.assetName}</span>
                         </div>
                         <span className="text-xs text-gray-500">Asset Name</span>
