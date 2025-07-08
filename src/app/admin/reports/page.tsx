@@ -41,6 +41,7 @@ interface Report {
   remarks?: string;
   productOrRequirements?: string;
   division?: string;
+  company?: string; // Added company field
 }
 
 export default function ReportsPage() {
@@ -56,11 +57,15 @@ export default function ReportsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
-  const [divisionOptions, ] = useState([
-    'Military Radar', 'ADSN (Advanced Defence System  Navy)', 'Naval Sonar & Communication System (NS-1)', ' T & BS (SCUS)', 'PDIC (PRODUCT DEVELPMENT)', 'EW & Avonics', 'Naval Radar and fire Control system(NS-2)','Militry Communication(MCE)', 'MS (missile systems)','MMF (Milatry Manfacturing  Facility)','NCS (Network Centric Systems)','PURCHASE','MWSC (Microwave Super Components)','HMC( Hybrid Micro Circuits)','EMCTC/QM, Hydrabad','ADSN','(D&E-MCW) Ghaziabad','MM/GR1-RADAR ,Ghaziabad','D&E - Antenna, Ghaziabad','Panchakula','(PCB Software Design Group)','ELWLS Div, Hydrabad','D&E (NS),Hyderabad','D & E,  Chennai','Microwave Tubes Division(MWT)'
-  ]);
+  const [divisionOptions, setDivisionOptions] = useState<string[]>([]);
+  const [companyOptions, setCompanyOptions] = useState<string[]>([]);
   const [divisionFilter, setDivisionFilter] = useState("");
+  const [companyFilter, setCompanyFilter] = useState("");
   const [showDivisionDropdown, setShowDivisionDropdown] = useState(false);
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+
+  const [searchOption, setSearchOption] = useState("");
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   const reportTypes = [
     { id: 'employee', label: 'Employee Report', icon: <FileText className="w-5 h-5" /> },
@@ -145,6 +150,7 @@ export default function ReportsPage() {
           remarks: r.remarks,
           productOrRequirements: r.productOrRequirements,
           division: r.division,
+          company: r.company, // Map company field
         }));
         setReports(mappedReports);
       } catch (err: Error | unknown) {
@@ -155,6 +161,21 @@ export default function ReportsPage() {
       }
     };
     fetchReports();
+  }, []);
+
+  useEffect(() => {
+    fetch(APIURL + '/api/reports/customer-divisions')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setDivisionOptions(data);
+        else if (data && Array.isArray(data.divisions)) setDivisionOptions(data.divisions);
+      });
+    fetch(APIURL + '/api/reports/customer-companies')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setCompanyOptions(data);
+        else if (data && Array.isArray(data.companies)) setCompanyOptions(data.companies);
+      });
   }, []);
 
   const filteredReports = reports.filter(report => {
@@ -319,52 +340,75 @@ export default function ReportsPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             {/* Division Filter Dropdown (only if customer reports exist) */}
             {filteredReports.some(r => r.type === 'customer') && (
-              <div className="mb-4 max-w-xs">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Division</label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-                  </span>
+              <div className="mb-6 max-w-xs">
+                <div className="relative group">
                   <input
                     type="text"
-                    value={divisionFilter}
-                    onChange={e => setDivisionFilter(e.target.value)}
-                    onFocus={() => setShowDivisionDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowDivisionDropdown(false), 100)}
-                    placeholder="Search or select division"
-                    className="w-full pl-10 pr-10 rounded-full border border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200 py-2.5 transition-all duration-150"
+                    id="modern-search"
+                    value={searchOption}
+                    onChange={e => setSearchOption(e.target.value)}
+                    onFocus={() => setShowSearchDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowSearchDropdown(false), 100)}
+                    placeholder=" "
+                    className="block w-full px-12 py-3 text-base bg-white border border-gray-200 rounded-2xl shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-150 peer"
                     autoComplete="off"
                   />
-                  {divisionFilter && (
+                  <label htmlFor="modern-search" className="absolute left-12 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none transition-all duration-150 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-blue-600 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 bg-white px-1">
+                    Search Department or Company
+                  </label>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+                  </span>
+                  {searchOption && (
                     <button
                       type="button"
-                      onClick={() => setDivisionFilter("")}
-                      className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                      onClick={() => setSearchOption("")}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none bg-white rounded-full p-1 shadow-sm"
                       tabIndex={-1}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   )}
-                  {showDivisionDropdown && (
-                    <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-2 max-h-56 overflow-y-auto shadow-xl animate-fadeIn">
+                  {showSearchDropdown && (
+                    <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-2xl mt-2 shadow-xl animate-fadeIn overflow-hidden">
                       {divisionOptions.filter(opt =>
-                        opt.toLowerCase().includes(divisionFilter.toLowerCase())
+                        opt.toLowerCase().includes(searchOption.toLowerCase())
                       ).map(opt => (
                         <li
-                          key={opt}
+                          key={"division-" + opt}
                           onMouseDown={() => {
-                            setDivisionFilter(opt);
-                            setShowDivisionDropdown(false);
+                            setSearchOption(opt);
+                            setShowSearchDropdown(false);
                           }}
-                          className={`px-4 py-2 cursor-pointer hover:bg-blue-100 rounded ${divisionFilter === opt ? 'bg-blue-100' : ''}`}
+                          className="px-4 py-3 cursor-pointer hover:bg-blue-50 border-b last:border-b-0 flex items-center gap-2"
                         >
-                          {opt}
+                          <span className="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>
+                          <span className="text-xs text-blue-600 font-semibold">Division</span>
+                          <span className="ml-2 text-gray-800">{opt}</span>
+                        </li>
+                      ))}
+                      {companyOptions.filter(opt =>
+                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                      ).map(opt => (
+                        <li
+                          key={"company-" + opt}
+                          onMouseDown={() => {
+                            setSearchOption(opt);
+                            setShowSearchDropdown(false);
+                          }}
+                          className="px-4 py-3 cursor-pointer hover:bg-green-50 border-b last:border-b-0 flex items-center gap-2"
+                        >
+                          <span className="inline-block w-2 h-2 rounded-full bg-green-400 mr-2"></span>
+                          <span className="text-xs text-green-600 font-semibold">Company</span>
+                          <span className="ml-2 text-gray-800">{opt}</span>
                         </li>
                       ))}
                       {divisionOptions.filter(opt =>
-                        opt.toLowerCase().includes(divisionFilter.toLowerCase())
+                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                      ).length === 0 && companyOptions.filter(opt =>
+                        opt.toLowerCase().includes(searchOption.toLowerCase())
                       ).length === 0 && (
-                        <li className="px-4 py-2 text-gray-400">No results found</li>
+                        <li className="px-4 py-3 text-gray-400">No results found</li>
                       )}
                     </ul>
                   )}
@@ -379,9 +423,9 @@ export default function ReportsPage() {
                   <button
                     onClick={() => {
                       // Export to CSV
-                      const customerReports = filteredReports.filter(r => r.type === 'customer' && (!divisionFilter || r.division === divisionFilter));
+                      const customerReports = filteredReports.filter(r => r.type === 'customer' && (!searchOption || r.division === searchOption || r.company === searchOption));
                       const headers = [
-                        'Visited Engineer', 'DATE', 'NAME', 'DESIGNATION', 'LANDLINE / MOBILE', 'EMAIL ID', 'REMARKS', 'Product or Requirements', 'Division'
+                        'Visited Engineer', 'DATE', 'NAME', 'DESIGNATION', 'LANDLINE / MOBILE', 'EMAIL ID', 'REMARKS', 'Product or Requirements', 'Division', 'Company'
                       ];
                       const rows = customerReports.map(report => [
                         report.employeeName || '-',
@@ -392,7 +436,8 @@ export default function ReportsPage() {
                         report.emailId || '-',
                         report.remarks || '-',
                         report.productOrRequirements || '-',
-                        report.division || '-'
+                        report.division || '-',
+                        
                       ]);
                       const csvContent = [headers, ...rows].map(e => e.map(x => `"${x}"`).join(",")).join("\n");
                       const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -412,9 +457,9 @@ export default function ReportsPage() {
                   <button
                     onClick={() => {
                       // Export to PDF
-                      const customerReports = filteredReports.filter(r => r.type === 'customer' && (!divisionFilter || r.division === divisionFilter));
+                      const customerReports = filteredReports.filter(r => r.type === 'customer' && (!searchOption || r.division === searchOption || r.company === searchOption));
                       const headers = [
-                        'Visited Engineer', 'DATE', 'NAME', 'DESIGNATION', 'LANDLINE / MOBILE', 'EMAIL ID', 'REMARKS', 'Product or Requirements', 'Division'
+                        'Visited Engineer', 'DATE', 'NAME', 'DESIGNATION', 'LANDLINE / MOBILE', 'EMAIL ID', 'REMARKS', 'Product or Requirements', 'Division', 'Company'
                       ];
                       const rows = customerReports.map(report => [
                         report.employeeName || '-',
@@ -425,7 +470,8 @@ export default function ReportsPage() {
                         report.emailId || '-',
                         report.remarks || '-',
                         report.productOrRequirements || '-',
-                        report.division || '-'
+                        report.division || '-',
+                       
                       ]);
                       const doc = new jsPDF();
                       doc.text('Customer Reports', 14, 16);
@@ -455,11 +501,12 @@ export default function ReportsPage() {
                       <th className="px-4 py-2 font-bold border">EMAIL ID</th>
                       <th className="px-4 py-2 font-bold border">REMARKS</th>
                       <th className="px-4 py-2 font-bold border">Product or Requirements</th>
-                      <th className="px-4 py-2 font-bold border">Division</th>
+                      <th className="px-4 py-2 font-bold border">Department</th>
+                     
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredReports.filter(r => r.type === 'customer' && (!divisionFilter || r.division === divisionFilter)).map(report => (
+                    {filteredReports.filter(r => r.type === 'customer' && (!searchOption || r.division === searchOption || r.company === searchOption)).map(report => (
                       <tr key={report.id} className="border-b hover:bg-gray-50">
                         <td className="px-4 py-2 border">{report.employeeName || '-'}</td>
                         <td className="px-4 py-2 border">{new Date(report.date).toLocaleDateString()}</td>
@@ -470,6 +517,7 @@ export default function ReportsPage() {
                         <td className="px-4 py-2 border">{report.remarks || '-'}</td>
                         <td className="px-4 py-2 border">{report.productOrRequirements || '-'}</td>
                         <td className="px-4 py-2 border">{report.division || '-'}</td>
+                       
                       </tr>
                     ))}
                   </tbody>
@@ -538,4 +586,4 @@ export default function ReportsPage() {
       </div>
     </div>
   );
-} 
+}

@@ -38,7 +38,7 @@ interface Report {
   remarks?: string;
   productOrRequirements?: string;
   division?: string;
-
+  company?: string; // Added company field
 }
  
 // Define your backend API base URL
@@ -73,11 +73,13 @@ export default function ReportsPage() {
     remarks: '',
     productOrRequirements: '',
     division: '',
+    company: '',
     attachments: [] as string[],
   });
-  const divisionOptions = [
-    'Military Radar', 'ADSN (Advanced Defence System  Navy)', 'Naval Sonar & Communication System (NS-1)', ' T & BS (SCUS)', 'PDIC (PRODUCT DEVELPMENT)', 'EW & Avonics', 'Naval Radar and fire Control system(NS-2)','Militry Communication(MCE)', 'MS (missile systems)','MMF (Milatry Manfacturing  Facility)','NCS (Network Centric Systems)','PURCHASE','MWSC (Microwave Super Components)','HMC( Hybrid Micro Circuits)','EMCTC/QM, Hydrabad','ADSN','(D&E-MCW) Ghaziabad','MM/GR1-RADAR ,Ghaziabad','D&E - Antenna, Ghaziabad','Panchakula','(PCB Software Design Group)','ELWLS Div, Hydrabad','D&E (NS),Hyderabad','D & E,  Chennai','Microwave Tubes Division(MWT)'
-  ];
+  const [divisionOptions, setDivisionOptions] = useState<string[]>([]);
+  const [companyOptions, setCompanyOptions] = useState<string[]>([]);
+  const [searchOption, setSearchOption] = useState("");
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
  
   const reportTypes = [
@@ -128,6 +130,23 @@ export default function ReportsPage() {
     }
     setEmployeeId(id);
   }, [router]);
+ 
+  useEffect(() => {
+    // Fetch division options from API
+    fetch(APIURL + '/api/reports/customer-divisions')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setDivisionOptions(data);
+        else if (data && Array.isArray(data.divisions)) setDivisionOptions(data.divisions);
+      });
+    // Fetch company options from API
+    fetch(APIURL + '/api/reports/customer-companies')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setCompanyOptions(data);
+        else if (data && Array.isArray(data.companies)) setCompanyOptions(data.companies);
+      });
+  }, []);
  
   // Function to fetch reports from the backend - now employee-specific
   const fetchReports = useCallback(async () => {
@@ -189,7 +208,7 @@ export default function ReportsPage() {
     }
     if (newReport.type === 'customer') {
       // Validate required fields for customer report
-      if (!customerReport.title || !customerReport.date || !customerReport.customerName || !customerReport.designation || !customerReport.landlineOrMobile || !customerReport.emailId || !customerReport.productOrRequirements || !customerReport.division) {
+      if (!customerReport.title || !customerReport.date || !customerReport.customerName || !customerReport.designation || !customerReport.landlineOrMobile || !customerReport.emailId || !customerReport.productOrRequirements || !customerReport.division || !customerReport.company) {
         setError('Please fill all required fields for Customer Report.');
         return;
       }
@@ -207,6 +226,7 @@ export default function ReportsPage() {
         remarks: customerReport.remarks,
         productOrRequirements: customerReport.productOrRequirements,
         division: customerReport.division,
+        company: customerReport.company,
         attachments: customerReport.attachments,
       };
       try {
@@ -223,7 +243,7 @@ export default function ReportsPage() {
         setReports([createdReport, ...reports]);
         setShowNewReportForm(false);
         setCustomerReport({
-          title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', attachments: []
+          title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', company: '', attachments: []
         });
         setNewReport({ type: 'employee', subtype: 'daily', title: '', content: '', status: 'draft' });
         setError(null);
@@ -326,7 +346,7 @@ export default function ReportsPage() {
               <button
                 onClick={() => {
                   setShowNewReportForm(false);
-                  setCustomerReport({ title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', attachments: [] });
+                  setCustomerReport({ title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', company: '', attachments: [] });
                   setNewReport({ type: 'employee', subtype: 'daily', title: '', content: '', status: 'draft' });
                   setError(null);
                 }}
@@ -406,6 +426,17 @@ export default function ReportsPage() {
                       onChange={e => setCustomerReport({ ...customerReport, emailId: e.target.value })}
                       className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
                       placeholder="Enter email ID"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Company <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={customerReport.company || ""}
+                      onChange={e => setCustomerReport({ ...customerReport, company: e.target.value })}
+                      className="w-full rounded-lg border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 mt-1"
+                      placeholder="Enter company name"
                       required
                     />
                   </div>
@@ -494,11 +525,11 @@ export default function ReportsPage() {
               <div className="flex flex-col md:flex-row justify-end gap-4 pt-4 border-t mt-8">
                 <button type="button" onClick={() => {
                   setShowNewReportForm(false);
-                  setCustomerReport({ title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', attachments: [] });
+                  setCustomerReport({ title: '', content: '', date: '', status: 'submitted', submittedBy: '', customerName: '', designation: '', landlineOrMobile: '', emailId: '', remarks: '', productOrRequirements: '', division: '', company: '', attachments: [] });
                   setNewReport({ type: 'employee', subtype: 'daily', title: '', content: '', status: 'draft' });
                   setError(null);
                 }} className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 w-full md:w-auto">Cancel</button>
-                <button type="button" onClick={handleSubmitReport} className="px-6 py-2.5 text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" disabled={!customerReport.title || !customerReport.date || !customerReport.customerName || !customerReport.designation || !customerReport.landlineOrMobile || !customerReport.emailId || !customerReport.productOrRequirements || !customerReport.division}>Submit Report</button>
+                <button type="button" onClick={handleSubmitReport} className="px-6 py-2.5 text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" disabled={!customerReport.title || !customerReport.date || !customerReport.customerName || !customerReport.designation || !customerReport.landlineOrMobile || !customerReport.emailId || !customerReport.productOrRequirements || !customerReport.division || !customerReport.company}>Submit Report</button>
               </div>
             </form>
           </div>
@@ -787,6 +818,84 @@ export default function ReportsPage() {
               </div>
             )}
  
+            {/* Modern unified search bar for customer reports */}
+            {selectedType === 'customer' && (
+              <div className="mb-6 max-w-xs">
+                <div className="relative group">
+                  <input
+                    type="text"
+                    id="modern-search"
+                    value={searchOption}
+                    onChange={e => setSearchOption(e.target.value)}
+                    onFocus={() => setShowSearchDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowSearchDropdown(false), 100)}
+                    placeholder=" "
+                    className="block w-full px-12 py-3 text-base bg-white border border-gray-200 rounded-2xl shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-150 peer"
+                    autoComplete="off"
+                  />
+                  <label htmlFor="modern-search" className="absolute left-12 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none transition-all duration-150 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-blue-600 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 bg-white px-1">
+                    Search Department or Company
+                  </label>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+                  </span>
+                  {searchOption && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchOption("")}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none bg-white rounded-full p-1 shadow-sm"
+                      tabIndex={-1}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  )}
+                  {showSearchDropdown && (
+                    <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-2xl mt-2 shadow-xl animate-fadeIn overflow-hidden">
+                      {divisionOptions.filter(opt =>
+                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                      ).map(opt => (
+                        <li
+                          key={"division-" + opt}
+                          onMouseDown={() => {
+                            setSearchOption(opt);
+                            setShowSearchDropdown(false);
+                          }}
+                          className="px-4 py-3 cursor-pointer hover:bg-blue-50 border-b last:border-b-0 flex items-center gap-2"
+                        >
+                          <span className="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>
+                          <span className="text-xs text-blue-600 font-semibold">Department</span>
+                          <span className="ml-2 text-gray-800">{opt}</span>
+                        </li>
+                      ))}
+                      {companyOptions.filter(opt =>
+                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                      ).map(opt => (
+                        <li
+                          key={"company-" + opt}
+                          onMouseDown={() => {
+                            setSearchOption(opt);
+                            setShowSearchDropdown(false);
+                          }}
+                          className="px-4 py-3 cursor-pointer hover:bg-green-50 border-b last:border-b-0 flex items-center gap-2"
+                        >
+                          <span className="inline-block w-2 h-2 rounded-full bg-green-400 mr-2"></span>
+                          <span className="text-xs text-green-600 font-semibold">Company</span>
+                          <span className="ml-2 text-gray-800">{opt}</span>
+                        </li>
+                      ))}
+                      {divisionOptions.filter(opt =>
+                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                      ).length === 0 && companyOptions.filter(opt =>
+                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                      ).length === 0 && (
+                        <li className="px-4 py-3 text-gray-400">No results found</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+ 
             {/* Loading and Error Indicators */}
             {loading && <div className="text-center py-4 text-gray-500">Loading reports...</div>}
             {error && <div className="text-center py-4 text-red-600">{error}</div>}
@@ -798,7 +907,7 @@ export default function ReportsPage() {
                   {reports.length === 0 ? (
                     <div className="text-center text-gray-500 py-8">No reports found for the selected filters.</div>
                   ) : (
-                    reports.map(report => (
+                    reports.filter(report => report.type === 'customer' && (!searchOption || report.division === searchOption || report.company === searchOption)).map(report => (
                       report.type === 'customer' ? (
                         <div key={report.id} className="border rounded-2xl p-6 bg-gradient-to-br from-blue-50 to-white shadow-md animate-fadeIn">
                           <div className="flex items-center justify-between mb-4">
@@ -814,6 +923,10 @@ export default function ReportsPage() {
                             <div>
                               <div className="text-xs text-gray-500 mb-1">Customer Name</div>
                               <div className="font-medium text-gray-800">{report.customerName || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Company</div>
+                              <div className="font-medium text-gray-800">{report.company || '-'}</div>
                             </div>
                             <div>
                               <div className="text-xs text-gray-500 mb-1">Designation</div>
@@ -941,4 +1054,4 @@ export default function ReportsPage() {
   );
 }
  
- 
+

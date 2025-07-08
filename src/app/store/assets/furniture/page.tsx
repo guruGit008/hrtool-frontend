@@ -207,7 +207,12 @@ export default function FurniturePage() {
 
   const handleEdit = async (id: string, updatedItem: Partial<Item>) => {
     try {
-      const updated = await furnitureAPI.update(id, updatedItem);
+      const furniture: Partial<Furniture> = {
+        ...updatedItem,
+        condition: updatedItem.itemCondition as Furniture['condition'],
+        purchaseDate: updatedItem.purchaseDate,
+      };
+      const updated = await furnitureAPI.update(id, furniture);
       if (updated) {
         setItems(prevItems => prevItems.map(item => item.id === id ? updated : item));
         toast.success('Furniture item updated successfully!');

@@ -421,9 +421,19 @@ export default function JoiningPage() {
             <div key={employee.id} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 flex flex-col">
               <div className="flex items-center mb-4">
                 {employee.profilePhotoUrl ? (
-                  <Image src={`${API_ORIGIN}${employee.profilePhotoUrl}`} alt={employee.employeeName} width={64} height={64} className="w-16 h-16 rounded-full object-cover mr-4" />
+                  <Image 
+                    src={employee.profilePhotoUrl.startsWith('http') 
+                      ? employee.profilePhotoUrl 
+                      : `${API_ORIGIN}${employee.profilePhotoUrl}`}
+                    alt={employee.employeeName}
+                    width={64}
+                    height={64}
+                    className="w-16 h-16 rounded-full object-cover mr-4" 
+                  />
                 ) : (
-                  <div className="w-16 h-16 mr-4 shrink-0" />
+                  <div className="w-16 h-16 mr-4 shrink-0 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-gray-400" />
+                  </div>
                 )}
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
@@ -825,4 +835,4 @@ export default function JoiningPage() {
     </div>
   );
 }
- 
+

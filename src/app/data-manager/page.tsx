@@ -1,4 +1,6 @@
 'use client';
+import { useRouter } from "next/navigation";
+
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -150,6 +152,9 @@ const modules: Module[] = [
 type MonthlyDataItem = { [key: string]: string | number | undefined };
 
 export default function DataManagerDashboard() {
+
+  const router = useRouter();
+
   const [moduleCounts, setModuleCounts] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,6 +189,19 @@ export default function DataManagerDashboard() {
       ],
     }]
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+
+    if (!token || !roles.includes('DATA_MANAGER')) {
+      router.replace('/login');
+    } else {
+      setLoading(true);
+      
+    }
+    // eslint-disable-next-line
+  }, [router]);
 
 
   useEffect(() => {
