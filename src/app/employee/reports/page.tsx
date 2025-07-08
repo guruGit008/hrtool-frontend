@@ -76,6 +76,8 @@ export default function ReportsPage() {
     company: '',
     attachments: [] as string[],
   });
+
+  
   const [divisionOptions, setDivisionOptions] = useState<string[]>([]);
   const [companyOptions, setCompanyOptions] = useState<string[]>([]);
   const [searchOption, setSearchOption] = useState("");
