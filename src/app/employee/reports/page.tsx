@@ -46,7 +46,26 @@ const BASE_URL = APIURL + '/api/reports'; // Your Spring Boot backend URL
  
 export default function ReportsPage() {
   const router = useRouter();
-  const [reports, setReports] = useState<Report[]>([]);
+  const [reports, setReports] = useState<Report[]>([
+    {
+      id: 99999,
+      type: 'customer',
+      title: 'Customer Product Inquiry',
+      submittedBy: 'EMP001',
+      customerName: 'Jin',
+      designation: 'great',
+      landlineOrMobile: '+1234567890',
+      emailId: 'jin@example.com',
+      remarks: 'Follow up required within 2 days',
+      productOrRequirements: 'Software Development Services',
+      division: 'Sales',
+      company: 'Acme Corp',
+      date: '2025-07-05',
+      status: 'submitted',
+      content: '',
+      attachments: [],
+    },
+  ]);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSubtype, setSelectedSubtype] = useState<string>('all');
   const [showNewReportForm, setShowNewReportForm] = useState(false);
@@ -76,8 +95,6 @@ export default function ReportsPage() {
     company: '',
     attachments: [] as string[],
   });
-
-  
   const [divisionOptions, setDivisionOptions] = useState<string[]>([]);
   const [companyOptions, setCompanyOptions] = useState<string[]>([]);
   const [searchOption, setSearchOption] = useState("");
@@ -217,7 +234,6 @@ export default function ReportsPage() {
       const reportData = {
         type: 'customer',
         title: customerReport.title,
-        content: customerReport.content,
         date: customerReport.date,
         status: customerReport.status,
         submittedBy: employeeId,
@@ -958,12 +974,16 @@ export default function ReportsPage() {
                               <div className="text-xs text-gray-500 mb-1">Submitted By</div>
                               <div className="font-medium text-gray-800">{report.submittedBy || '-'}</div>
                             </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Type</div>
+                              <div className="font-medium text-gray-800">{reportTypes.find(t => t.id === report.type)?.label}</div>
+                            </div>
                           </div>
                           <div className="mb-2">
                             <div className="text-xs text-gray-500 mb-1">Remarks</div>
                             <div className="text-gray-700">{report.remarks || '-'}</div>
                           </div>
-                          <div className="mb-2">
+                          {/* <div className="mb-2">
                             <div className="text-xs text-gray-500 mb-1">Content</div>
                             <div className="text-gray-700">{report.content || '-'}</div>
                           </div>
@@ -972,7 +992,7 @@ export default function ReportsPage() {
                               <FileText className="w-4 h-4 text-gray-400" />
                               <span className="text-sm text-gray-600">Attachments: {report.attachments.join(', ')}</span>
                             </div>
-                          )}
+                          )} */}
                           <div className="flex justify-end gap-2 mt-4">
                             <button
                               onClick={() => handleDeleteReport(report.id)}
@@ -1030,7 +1050,7 @@ export default function ReportsPage() {
                               </button>
                             </div>
                           </div>
-                          <div className="mt-4 text-sm text-gray-600">
+                          {/* <div className="mt-4 text-sm text-gray-600">
                             <p>{report.content}</p>
                           </div>
                           {report.attachments && report.attachments.length > 0 && (
@@ -1040,7 +1060,7 @@ export default function ReportsPage() {
                                 Attachments: {report.attachments.join(', ')}
                               </span>
                             </div>
-                          )}
+                          )} */}
                         </div>
                       )
                     ))
