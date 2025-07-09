@@ -59,8 +59,7 @@ export default function ReportsPage() {
 
   const [divisionOptions, setDivisionOptions] = useState<string[]>([]);
   const [companyOptions, setCompanyOptions] = useState<string[]>([]);
-
-
+ 
   const [searchOption, setSearchOption] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
@@ -422,7 +421,7 @@ export default function ReportsPage() {
                       // Export to CSV
                       const customerReports = filteredReports.filter(r => r.type === 'customer' && (!searchOption || r.division === searchOption || r.company === searchOption));
                       const headers = [
-                        'Visited Engineer', 'DATE', 'NAME', 'DESIGNATION', 'LANDLINE / MOBILE', 'EMAIL ID', 'REMARKS', 'Product or Requirements', 'Division', 'Company'
+                        'Visited Engineer', 'DATE', 'CUSTOMER NAME', 'DESIGNATION', 'LANDLINE / MOBILE', 'EMAIL ID', 'REMARKS', 'Product or Requirements', 'Division', 'Company'
                       ];
                       const rows = customerReports.map(report => [
                         report.employeeName || '-',
@@ -456,7 +455,7 @@ export default function ReportsPage() {
                       // Export to PDF
                       const customerReports = filteredReports.filter(r => r.type === 'customer' && (!searchOption || r.division === searchOption || r.company === searchOption));
                       const headers = [
-                        'Visited Engineer', 'Date', 'Customer Name', 'Designation', 'Landline / Moblie', 'Email Id', 'Remarks', 'Requirements', 'Division', 'Company'
+                        'Visited Engineer', 'DATE', 'CUSTOMER NAME', 'DESIGNATION', 'LANDLINE / MOBILE', 'EMAIL ID', 'REMARKS', 'Product or Requirements', 'Division', 'Company'
                       ];
                       const rows = customerReports.map(report => [
                         report.employeeName || '-',
@@ -491,12 +490,12 @@ export default function ReportsPage() {
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-4 py-2 font-bold border">Visited Engineer</th>
-                      <th className="px-4 py-2 font-bold border">Date</th>
-                      <th className="px-4 py-2 font-bold border">Customer Name</th>
-                      <th className="px-4 py-2 font-bold border">Designation</th>
-                      <th className="px-4 py-2 font-bold border">Landline / Moblie</th>
-                      <th className="px-4 py-2 font-bold border">Email Id</th>
-                      <th className="px-4 py-2 font-bold border">Remarks</th>
+                      <th className="px-4 py-2 font-bold border">DATE</th>
+                      <th className="px-4 py-2 font-bold border">CUSTOMER NAME</th>
+                      <th className="px-4 py-2 font-bold border">DESIGNATION</th>
+                      <th className="px-4 py-2 font-bold border">LANDLINE / MOBILE</th>
+                      <th className="px-4 py-2 font-bold border">EMAIL ID</th>
+                      <th className="px-4 py-2 font-bold border">REMARKS</th>
                       <th className="px-4 py-2 font-bold border">Product or Requirements</th>
                       <th className="px-4 py-2 font-bold border">Department</th>
                      
@@ -566,14 +565,7 @@ export default function ReportsPage() {
                     <div className="mt-4 text-sm text-gray-600">
                       <p>{report.content}</p>
                     </div>
-                    {report.attachments && (
-                      <div className="mt-4 flex items-center space-x-2">
-                        <FileText className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          Attachments: {report.attachments.join(', ')}
-                        </span>
-                      </div>
-                    )}
+                  
                   </div>
                 ))
               )}

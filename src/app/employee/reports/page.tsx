@@ -23,14 +23,16 @@ interface Report {
   type: 'employee' | 'visit' | 'oem' | 'customer' | 'blueprint' | 'projection' | 'achievement';
   subtype?: 'daily' | 'weekly' | 'monthly' | 'yearly';
   title: string;
-  date: string;
-  status: 'draft' | 'submitted' | 'approved';
-  content: string;
-  attachments?: string[];
+  date: string | number[];
+  status: 'draft' | 'submitted' | 'approved' | null;
+  content?: string | null;
+  attachments?: string[] | null;
   submittedBy?: string;
   approvedBy?: string;
   approvedDate?: string;
   department?: string;
+  employeeId?: string;
+  employeeName?: string;
   customerName?: string;
   designation?: string;
   landlineOrMobile?: string;
@@ -38,7 +40,7 @@ interface Report {
   remarks?: string;
   productOrRequirements?: string;
   division?: string;
-  company?: string; // Added company field
+  company?: string;
 }
  
 // Define your backend API base URL
@@ -231,10 +233,11 @@ export default function ReportsPage() {
         setError('Please fill all required fields for Customer Report.');
         return;
       }
+      const dateArr = customerReport.date ? customerReport.date.split('-').map(Number) : null;
       const reportData = {
         type: 'customer',
         title: customerReport.title,
-        date: customerReport.date,
+        date: dateArr,
         status: customerReport.status,
         submittedBy: employeeId,
         customerName: customerReport.customerName,
@@ -672,7 +675,7 @@ export default function ReportsPage() {
                 </div>
               </div>
               <textarea
-                value={newReport.content}
+                value={newReport.content ?? ''}
                 onChange={(e) => {
                   const text = e.target.value;
                   const words = text.trim().split(/\s+/).filter(word => word.length > 0);
@@ -935,7 +938,7 @@ export default function ReportsPage() {
                               </div>
                               <h3 className="font-semibold text-xl text-gray-900">{report.title}</h3>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(report.status)}`}>{report.status}</span>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(report.status || '')}`}>{report.status || 'N/A'}</span>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                             <div>
@@ -964,7 +967,7 @@ export default function ReportsPage() {
                             </div>
                             <div>
                               <div className="text-xs text-gray-500 mb-1">Date</div>
-                              <div className="font-medium text-gray-800">{new Date(report.date).toLocaleDateString()}</div>
+                              <div className="font-medium text-gray-800">{Array.isArray(report.date) ? `${report.date[0]}-${String(report.date[1]).padStart(2, '0')}-${String(report.date[2]).padStart(2, '0')}` : report.date}</div>
                             </div>
                             <div>
                               <div className="text-xs text-gray-500 mb-1">Department</div>
@@ -983,16 +986,11 @@ export default function ReportsPage() {
                             <div className="text-xs text-gray-500 mb-1">Remarks</div>
                             <div className="text-gray-700">{report.remarks || '-'}</div>
                           </div>
-                          {/* <div className="mb-2">
+                          <div className="mb-2">
                             <div className="text-xs text-gray-500 mb-1">Content</div>
-                            <div className="text-gray-700">{report.content || '-'}</div>
+                            <div className="text-gray-700">{typeof report.content === 'string' && report.content.trim() ? report.content : '-'}</div>
                           </div>
-                          {report.attachments && report.attachments.length > 0 && (
-                            <div className="mt-4 flex items-center space-x-2">
-                              <FileText className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-600">Attachments: {report.attachments.join(', ')}</span>
-                            </div>
-                          )} */}
+                        
                           <div className="flex justify-end gap-2 mt-4">
                             <button
                               onClick={() => handleDeleteReport(report.id)}
@@ -1017,7 +1015,7 @@ export default function ReportsPage() {
                                   {report.type === 'employee' && report.subtype && (
                                     <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
                                   )}
-                                  <p>Date: {new Date(report.date).toLocaleDateString()}</p>
+                                  <p>Date: {Array.isArray(report.date) ? `${report.date[0]}-${String(report.date[1]).padStart(2, '0')}-${String(report.date[2]).padStart(2, '0')}` : report.date}</p>
                                   <p>Submitted by: {report.submittedBy}</p>
                                   {report.approvedBy && (
                                     <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
@@ -1026,8 +1024,8 @@ export default function ReportsPage() {
                               </div>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
-                                {report.status}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status || '')}`}>
+                                {report.status || 'N/A'}
                               </span>
                               {/* Optional: Add Download button if attachments are actual URLs */}
                               {report.attachments && report.attachments.length > 0 && (
@@ -1050,22 +1048,160 @@ export default function ReportsPage() {
                               </button>
                             </div>
                           </div>
-                          {/* <div className="mt-4 text-sm text-gray-600">
-                            <p>{report.content}</p>
+                          <div className="mb-2">
+                            <div className="text-xs text-gray-500 mb-1">Content</div>
+                            <div className="text-gray-700">{typeof report.content === 'string' && report.content.trim() ? report.content : '-'}</div>
                           </div>
-                          {report.attachments && report.attachments.length > 0 && (
-                            <div className="mt-4 flex items-center space-x-2">
-                              <FileText className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-600">
-                                Attachments: {report.attachments.join(', ')}
-                              </span>
-                            </div>
-                          )} */}
+                       
                         </div>
                       )
                     ))
                   )}
                 </div>
+              </div>
+            )}
+            {selectedType === 'employee' && (
+              <div className="space-y-4">
+                {reports.filter(report => report.type === 'employee' && (selectedSubtype === 'all' || report.subtype === selectedSubtype)).length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">No employee reports found for the selected filters.</div>
+                ) : (
+                  reports.filter(report => report.type === 'employee' && (selectedSubtype === 'all' || report.subtype === selectedSubtype)).map(report => (
+                    <div key={report.id} className="border rounded-2xl p-6 bg-gradient-to-br from-green-50 to-white shadow-md animate-fadeIn">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            {getReportIcon(report.type)}
+                          </div>
+                          <h3 className="font-semibold text-xl text-gray-900">{report.title}</h3>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Subtype</div>
+                          <div className="font-medium text-gray-800">{employeeSubtypes.find(s => s.id === report.subtype)?.label || report.subtype || '-'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Date</div>
+                          <div className="font-medium text-gray-800">{Array.isArray(report.date) ? `${report.date[0]}-${String(report.date[1]).padStart(2, '0')}-${String(report.date[2]).padStart(2, '0')}` : report.date}</div>
+                        </div>
+                      
+                      
+                      </div>
+                     
+                      <div className="mb-2">
+                        <div className="text-xs text-gray-500 mb-1">Content</div>
+                        <div className="text-gray-700">{typeof report.content === 'string' && report.content.trim() ? report.content : '-'}</div>
+                      </div>
+                      {/* Add more fields as needed */}
+                      <div className="flex justify-end gap-2 mt-4">
+                        <button
+                          onClick={() => handleDeleteReport(report.id)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                          title="Delete Report"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            {selectedType === 'all' && (
+              <div className="space-y-4">
+                {reports.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">No reports found for the selected filters.</div>
+                ) : (
+                  reports.map(report => (
+                    <div key={report.id} className="border rounded-2xl p-6 bg-gradient-to-br from-gray-50 to-white shadow-md animate-fadeIn">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-100 rounded-lg">
+                            {getReportIcon(report.type)}
+                          </div>
+                          <h3 className="font-semibold text-xl text-gray-900">{report.title}</h3>
+                        </div>
+                      </div>
+                      {report.type === 'employee' ? (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                           
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Date</div>
+                              <div className="font-medium text-gray-800">{Array.isArray(report.date) ? `${report.date[0]}-${String(report.date[1]).padStart(2, '0')}-${String(report.date[2]).padStart(2, '0')}` : report.date}</div>
+                            </div>
+                           
+                          
+                          </div>
+                          <div className="mb-2">
+                            <div className="text-xs text-gray-500 mb-1">Content</div>
+                            <div className="text-gray-700">{typeof report.content === 'string' && report.content.trim() ? report.content : '-'}</div>
+                          </div>
+                        </>
+                      ) : report.type === 'customer' ? (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Customer Name</div>
+                              <div className="font-medium text-gray-800">{report.customerName || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Company</div>
+                              <div className="font-medium text-gray-800">{report.company || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Designation</div>
+                              <div className="font-medium text-gray-800">{report.designation || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Landline/Mobile</div>
+                              <div className="font-medium text-gray-800">{report.landlineOrMobile || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Email ID</div>
+                              <div className="font-medium text-gray-800">{report.emailId || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Product/Requirements</div>
+                              <div className="font-medium text-gray-800">{report.productOrRequirements || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Date</div>
+                              <div className="font-medium text-gray-800">{Array.isArray(report.date) ? `${report.date[0]}-${String(report.date[1]).padStart(2, '0')}-${String(report.date[2]).padStart(2, '0')}` : report.date}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Department</div>
+                              <div className="font-medium text-gray-800">{report.division || '-'}</div>
+                            </div>
+                           
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">Type</div>
+                              <div className="font-medium text-gray-800">{reportTypes.find(t => t.id === report.type)?.label}</div>
+                            </div>
+                          </div>
+                          <div className="mb-2">
+                            <div className="text-xs text-gray-500 mb-1">Remarks</div>
+                            <div className="text-gray-700">{report.remarks || '-'}</div>
+                          </div>
+                          <div className="mb-2">
+                            <div className="text-xs text-gray-500 mb-1">Content</div>
+                            <div className="text-gray-700">{typeof report.content === 'string' && report.content.trim() ? report.content : '-'}</div>
+                          </div>
+                         
+                        </>
+                      ) : null}
+                      <div className="flex justify-end gap-2 mt-4">
+                        <button
+                          onClick={() => handleDeleteReport(report.id)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                          title="Delete Report"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>
