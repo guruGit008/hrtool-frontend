@@ -22,7 +22,7 @@ import autoTable from 'jspdf-autotable';
 interface Report {
   id: number;
   type: 'employee' | 'visit' | 'oem' | 'customer' | 'blueprint' | 'projection' | 'achievement';
-  subtype?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  subtype?: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'competitor_analysis';
   title: string;
   date: string;
   status: 'draft' | 'submitted' | 'approved';
@@ -42,6 +42,24 @@ interface Report {
   productOrRequirements?: string;
   division?: string;
   company?: string; // Added company field
+  slNo?: string; // Added for competitor_analysis
+  itemDescription?: string; // Added for competitor_analysis
+  competitor?: string; // Added for competitor_analysis
+  modelNumber?: string; // Added for competitor_analysis
+  unitPrice?: string; // Added for competitor_analysis
+  quotationNumber?: string; // Added for other subtypes
+  productDescription?: string; // Added for other subtypes
+  quantity?: string; // Added for other subtypes
+  xmwValue?: string; // Added for other subtypes
+  poNumber?: string; // Added for orders
+  orderDate?: string; // Added for orders
+  item?: string; // Added for orders
+  partNumber?: string; // Added for orders
+  xmwPrice?: string; // Added for orders
+  unitTotalOrderValue?: string; // Added for orders
+  totalPoValue?: string; // Added for orders
+  xmwInvoiceRef?: string; // Added for orders
+  xmwInvoiceDate?: string; // Added for orders
 }
 
 export default function ReportsPage() {
@@ -147,6 +165,24 @@ export default function ReportsPage() {
           productOrRequirements: r.productOrRequirements,
           division: r.division,
           company: r.company, // Map company field
+          slNo: r.slNo, // Map slNo field
+          itemDescription: r.itemDescription, // Map itemDescription field
+          competitor: r.competitor, // Map competitor field
+          modelNumber: r.modelNumber, // Map modelNumber field
+          unitPrice: r.unitPrice, // Map unitPrice field
+          quotationNumber: r.quotationNumber, // Map quotationNumber field
+          productDescription: r.productDescription, // Map productDescription field
+          quantity: r.quantity, // Map quantity field
+          xmwValue: r.xmwValue, // Map xmwValue field
+          poNumber: r.poNumber, // Map poNumber field
+          orderDate: r.orderDate, // Map orderDate field
+          item: r.item, // Map item field
+          partNumber: r.partNumber, // Map partNumber field
+          xmwPrice: r.xmwPrice, // Map xmwPrice field
+          unitTotalOrderValue: r.unitTotalOrderValue, // Map unitTotalOrderValue field
+          totalPoValue: r.totalPoValue, // Map totalPoValue field
+          xmwInvoiceRef: r.xmwInvoiceRef, // Map xmwInvoiceRef field
+          xmwInvoiceDate: r.xmwInvoiceDate // Map xmwInvoiceDate field
         }));
         setReports(mappedReports);
       } catch (err: Error | unknown) {
@@ -189,6 +225,110 @@ export default function ReportsPage() {
 
     return matchesType && matchesSubtype && matchesSearch && matchesDepartment && matchesStatus && matchesDateRange;
   });
+
+  // Add this helper for CSV export
+  function exportOEMToCSV(oemReports: Report[], subtype: string) {
+    if (!oemReports.length) return;
+    const headers = oemHeaders[subtype as keyof typeof oemHeaders];
+    const rows = oemReports.map(r => getOEMRow(r, subtype));
+    const csvContent = [headers, ...rows].map(e => e.map(x => `"${String(x).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `oem_${subtype}_reports.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Add this handler for PDF export
+  function exportOEMToPDF(oemReports: Report[], subtype: string) {
+    const doc = new jsPDF();
+    const headers = oemHeaders[subtype as keyof typeof oemHeaders];
+    const rows = oemReports.map(r => getOEMRow(r, subtype));
+    autoTable(doc, { head: [headers], body: rows });
+    doc.save(`oem_${subtype}_reports.pdf`);
+  }
+
+  // Helper to format date fields
+  function formatDate(date: string | string[] | undefined) {
+    if (Array.isArray(date) && date.length === 3) {
+      return `${date[0]}-${String(date[1]).padStart(2, '0')}-${String(date[2]).padStart(2, '0')}`;
+    }
+    return date ?? '-';
+  }
+
+  // OEM table headers by subtype
+  const oemHeaders: Record<string, string[]> = {
+    competitor_analysis: [
+      'Sl. No.', 'Customer Name', 'Item Description', 'Competitor', 'Model Number', 'Unit Price', 'Date', 'Submitted By', 'Employee Name', 
+    ],
+    orders: [
+      'PO Number', 'Order Date', 'Item', 'Quantity', 'Part Number', 'XMW Price', 'Unit Total Order Value', 'Total PO Value', 'Customer Name', 'XMW Invoice Ref', 'XMW Invoice Date', 'Submitted By', 'Employee Name', 
+    ],
+    open_tenders: [
+      'Customer Name', 'Quotation Number', 'Product Description', 'Quantity', 'XMW Value', 'Remarks', 'Date', 'Submitted By', 'Employee Name', 
+    ],
+    bugetary_submits: [
+      'Customer Name', 'Quotation Number', 'Product Description', 'Quantity', 'XMW Value', 'Remarks', 'Date', 'Submitted By', 'Employee Name', 
+    ],
+    lost_tenders: [
+      'Customer Name', 'Quotation Number', 'Product Description', 'Quantity', 'XMW Value', 'Remarks', 'Date', 'Submitted By', 'Employee Name', 
+    ],
+    holding_projects: [
+      'Customer Name', 'Quotation Number', 'Product Description', 'Quantity', 'XMW Value', 'Remarks', 'Date', 'Submitted By', 'Employee Name', 
+    ]
+  };
+
+  function getOEMRow(report: Report, subtype: string) {
+    switch (subtype) {
+      case 'competitor_analysis':
+        return [
+          report.slNo ?? '-',
+          report.customerName ?? '-',
+          report.itemDescription ?? '-',
+          report.competitor ?? '-',
+          report.modelNumber ?? '-',
+          report.unitPrice ?? '-',
+          formatDate(report.date),
+          report.submittedBy ?? '-',
+          report.employeeName ?? '-',
+          report.attachments?.join(', ') ?? '-'
+        ];
+      case 'orders':
+        return [
+          report.poNumber ?? '-',
+          formatDate(report.orderDate),
+          report.item ?? '-',
+          report.quantity ?? '-',
+          report.partNumber ?? '-',
+          report.xmwPrice ?? '-',
+          report.unitTotalOrderValue ?? '-',
+          report.totalPoValue ?? '-',
+          report.customerName ?? '-',
+          report.xmwInvoiceRef ?? '-',
+          formatDate(report.xmwInvoiceDate),
+         
+          report.submittedBy ?? '-',
+          report.employeeName ?? '-',
+          report.attachments?.join(', ') ?? '-'
+        ];
+      default:
+        return [
+          report.customerName ?? '-',
+          report.quotationNumber ?? '-',
+          report.productDescription ?? '-',
+          report.quantity ?? '-',
+          report.xmwValue ?? '-',
+          report.remarks ?? '-',
+          formatDate(report.date),
+          report.submittedBy ?? '-',
+          report.employeeName ?? '-',
+          report.attachments?.join(', ') ?? '-'
+        ];
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -332,6 +472,23 @@ export default function ReportsPage() {
             </div>
           )}
 
+          {/* OEM Report Subtype Filter */}
+          {selectedType === 'oem' && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedSubtype('all')}
+                  className={`px-3 py-1 rounded-lg ${
+                    selectedSubtype === 'all' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  All OEM Reports
+                </button>
+              
+              </div>
+            </div>
+          )}
+
           {/* Reports List */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             {/* Division Filter Dropdown (only if customer reports exist) */}
@@ -368,7 +525,7 @@ export default function ReportsPage() {
                   {showSearchDropdown && (
                     <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-2xl mt-2 shadow-xl animate-fadeIn overflow-hidden">
                       {divisionOptions.filter(opt =>
-                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                        typeof opt === 'string' && opt.toLowerCase().includes(searchOption.toLowerCase())
                       ).map(opt => (
                         <li
                           key={"division-" + opt}
@@ -384,7 +541,7 @@ export default function ReportsPage() {
                         </li>
                       ))}
                       {companyOptions.filter(opt =>
-                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                        typeof opt === 'string' && opt.toLowerCase().includes(searchOption.toLowerCase())
                       ).map(opt => (
                         <li
                           key={"company-" + opt}
@@ -400,9 +557,9 @@ export default function ReportsPage() {
                         </li>
                       ))}
                       {divisionOptions.filter(opt =>
-                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                        typeof opt === 'string' && opt.toLowerCase().includes(searchOption.toLowerCase())
                       ).length === 0 && companyOptions.filter(opt =>
-                        opt.toLowerCase().includes(searchOption.toLowerCase())
+                        typeof opt === 'string' && opt.toLowerCase().includes(searchOption.toLowerCase())
                       ).length === 0 && (
                         <li className="px-4 py-3 text-gray-400">No results found</li>
                       )}
@@ -520,6 +677,57 @@ export default function ReportsPage() {
                 </table>
               </div>
             )}
+            {selectedType === 'oem' && (
+              <div className="space-y-10">
+                {['orders', 'competitor_analysis', 'open_tenders', 'bugetary_submits', 'lost_tenders', 'holding_projects'].map(subtype => (
+                  <div key={subtype}>
+                    <h2 className="text-lg font-bold mb-4">
+                      OEM - {oemHeaders[subtype as keyof typeof oemHeaders] ? subtype.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : subtype}
+                    </h2>
+                    <div className="flex justify-end gap-2 mb-2">
+                      <button
+                        onClick={() => exportOEMToCSV(filteredReports.filter(r => r.type === 'oem' && r.subtype === subtype), subtype)}
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                      >
+                        Export CSV
+                      </button>
+                      <button
+                        onClick={() => exportOEMToPDF(filteredReports.filter(r => r.type === 'oem' && r.subtype === subtype), subtype)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        Download PDF
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto rounded-2xl shadow border border-gray-200 bg-white">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            {oemHeaders[subtype as keyof typeof oemHeaders].map((h, idx, arr) => (
+                              <th key={h} className={`px-4 py-2 min-w-[120px] text-xs font-bold text-gray-700 uppercase tracking-wider text-left align-middle border-r border-gray-200 ${idx === arr.length - 1 ? 'last:border-r-0' : ''}`}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                          {filteredReports.filter(r => r.type === 'oem' && r.subtype === subtype).length === 0 ? (
+                            <tr>
+                              <td colSpan={oemHeaders[subtype as keyof typeof oemHeaders].length} className="px-4 py-2 text-center text-gray-400 align-middle">No reports found</td>
+                            </tr>
+                          ) : (
+                            filteredReports.filter(r => r.type === 'oem' && r.subtype === subtype).map((report, rowIdx) => (
+                              <tr key={report.id} className={`${rowIdx === 0 ? 'border-b-2 border-gray-400' : ''} ${rowIdx % 2 === 1 ? 'even:bg-gray-50' : ''}`}> 
+                                {getOEMRow(report, subtype).map((cell, i, arr) => (
+                                  <td key={i} className={`px-4 py-2 min-w-[120px] align-middle border-r border-gray-200 ${i === arr.length - 1 ? 'last:border-r-0' : ''} ${typeof cell === 'number' || (typeof cell === 'string' && /\d{4}-\d{2}-\d{2}/.test(cell)) ? 'text-center' : 'text-left'}`}>{cell}</td>
+                                ))}
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="space-y-4">
               {loading ? (
                 <div className="text-center py-4">
@@ -527,7 +735,7 @@ export default function ReportsPage() {
                   <p className="mt-2 text-gray-600">Loading...</p>
                 </div>
               ) : (
-                filteredReports.filter(r => r.type !== 'customer').map(report => (
+                filteredReports.filter(r => r.type !== 'customer' && r.type !== 'oem').map(report => (
                   <div key={report.id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-4">
