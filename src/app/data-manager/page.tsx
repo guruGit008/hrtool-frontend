@@ -194,7 +194,7 @@ export default function DataManagerDashboard() {
     const token = localStorage.getItem('token');
     const roles = JSON.parse(localStorage.getItem('roles') || '[]');
 
-    if (!token || !roles.includes('DATA_MANAGER')) {
+    if (!token || !roles.includes('DATAMANAGER')) {
       router.replace('/login');
     } else {
       setLoading(true);

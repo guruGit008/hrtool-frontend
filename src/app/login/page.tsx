@@ -44,7 +44,7 @@ export default function LoginPage() {
       router.replace('/finance-manager/dashboard');
     } else if (roles.includes('HR')) {
       router.replace('/hr');
-    } else if (roles.includes('DATA_MANAGER')) {
+    } else if (roles.includes('DATAMANAGER')) {
       router.replace('/data-manager');
     } else {
       router.replace('/dashboard');
